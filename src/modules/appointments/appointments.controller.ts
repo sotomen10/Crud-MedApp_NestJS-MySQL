@@ -1,10 +1,13 @@
-import { Controller, Post, Body ,Get,Query,Patch,Param} from '@nestjs/common';
+import { Controller, Post, Body ,Get,Query,Patch,Param, UseGuards} from '@nestjs/common';
 import { AppointmentService } from '../appointments/appointments.service';
 import { CreateAppointmentDto } from './dto/create-appointment.dto';
 import { Appointment } from '../appointments/entities/appointment.entity';
 import { ApiQuery } from '@nestjs/swagger'
+import { JwtAuthGuard } from 'src/auth/guards/jwt.guard';
+import { RolesGuard } from 'src/auth/guards/jwt-roles.guard';
 
 @Controller('appointments')
+@UseGuards(JwtAuthGuard)
 export class AppointmentController {
   constructor(private readonly appointmentService: AppointmentService) {}
 
