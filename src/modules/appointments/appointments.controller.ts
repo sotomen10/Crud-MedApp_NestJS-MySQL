@@ -14,13 +14,14 @@ export class AppointmentController {
   }
 
   @Get('filter')
-  @ApiQuery({ name: 'date', required: false, description: 'Fecha en formato ISO' })
-  @ApiQuery({ name: 'specialty', required: false, description: 'Especialidad médica' })
-  @ApiQuery({ name: 'reason', required: false, description: 'Motivo de la cita' })
+  @ApiQuery({ name: 'date', required: false, description: 'Date in ISO format' })
+  @ApiQuery({ name: 'specialty', required: false, description: 'Medical specialty' })
+  @ApiQuery({ name: 'reason', required: false, description: 'Reason for the appointment' })
+  
   async filterAppointments(
-    @Query('date') date?: string, // Fecha en formato ISO
-    @Query('specialty') specialty?: string, // Especialidad
-    @Query('reason') reason?: string, // Motivo
+    @Query('date') date?: string, 
+    @Query('specialty') specialty?: string, 
+    @Query('reason') reason?: string, 
   ): Promise<Appointment[]> {
     return this.appointmentService.filterAppointments({ date, specialty, reason });
   }
@@ -28,8 +29,8 @@ export class AppointmentController {
 
   @Patch(':id/description')
   async updateDescription(
-    @Param('id') id: string, // Parámetro 'id' en la URL
-    @Body('description') description: string, // Descripción nueva desde el cuerpo de la solicitud
+    @Param('id') id: string, 
+    @Body('description') description: string, 
   ): Promise<Appointment> {
     return this.appointmentService.updateDescription(id, description);
   }

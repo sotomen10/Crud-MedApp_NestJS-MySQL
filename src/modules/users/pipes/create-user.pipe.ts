@@ -8,13 +8,9 @@ export class CreateUserPipe implements PipeTransform {
     
     if (!this.toValidate(metatype)) {
       return value;
-    }
-
-    
+    } 
     const object = plainToInstance(metatype, value);
     const errors = await validate(object);
-
-    
     if (errors.length > 0) {
       const errorMessages = errors.map(error =>
         Object.values(error.constraints).join(', ')
@@ -25,8 +21,6 @@ export class CreateUserPipe implements PipeTransform {
 
     return object; 
   }
-
- 
   private toValidate(metatype: Function): boolean {
     const types: Function[] = [String, Boolean, Number, Array, Object];
     return !types.includes(metatype);

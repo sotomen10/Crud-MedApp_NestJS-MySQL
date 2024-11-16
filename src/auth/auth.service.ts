@@ -66,22 +66,20 @@ export class AuthService implements AuthInterface {
 
   async googleAuthUser(email: string, fullName: string, roles: number[]): Promise<{ alldata: User; accessToken: string }> {
     try {
-      // Verifica si el usuario ya existe
+      
       let user = await this.userService.findByEmail(email);
-
-      // Si no existe, crea un nuevo usuario
       if (!user) {
         user = await this.userService.create({
           fullName,
           email,
-          password: null,  // No se requiere contraseña para Google
+          password: null,  //  No password needed for Google
           confirmPassword: null,
-          phone: 0, // Puedes establecer esto en algo más significativo o cambiar la lógica
+          phone: 0, 
           roles,
         });
       }
 
-      // Genera el payload y el token JWT
+      // Generates payload and JWT token
       const payload = {
         id: user.id,
         email: user.email,

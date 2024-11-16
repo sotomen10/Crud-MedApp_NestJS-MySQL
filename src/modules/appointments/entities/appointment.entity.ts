@@ -26,14 +26,14 @@ export class Appointment {
     status: string; // Options: 'pending', 'confirmed', 'completed', etc.
 
     @Column()
-    specialty: string; // Nueva columna para la especialidad del médico
+    specialty: string; 
 
     @Column()
-    reason: string; // Nueva columna para el motivo de la cita
+    reason: string; 
 
     @ManyToOne(() => User, user => user.appointments)
-    doctor: User; // Relación con User (médico)
+    doctor: User;
 
     @ManyToOne(() => Patient, patient => patient.appointments)
-    patient: Patient; // Relación con Patient (paciente)
+    patient: Patient; 
 }

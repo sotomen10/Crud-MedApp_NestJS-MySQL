@@ -13,7 +13,6 @@ import { AppointmentsModule } from './modules/appointments/appointments.module';
 import { PatientsModule } from './modules/patients/patients.module';
 import { NotificationsModule } from './notifications/notifications.module';
 
-
 @Module({
   imports: [
   ConfigModuleCustom,
@@ -31,7 +30,6 @@ import { NotificationsModule } from './notifications/notifications.module';
   AppointmentsModule,
   PatientsModule,
   NotificationsModule,
-
   
 ],
   controllers: [AppController],
@@ -41,7 +39,6 @@ import { NotificationsModule } from './notifications/notifications.module';
       provide:APP_FILTER,
       useClass:AllExceptionsFilter
     }
-  
   
   ],
 })

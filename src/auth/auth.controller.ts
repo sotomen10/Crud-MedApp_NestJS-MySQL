@@ -8,7 +8,7 @@ import { CreateUserPipe } from 'src/modules/users/pipes/create-user.pipe';
 import { GoogleAuthGuard } from './guards/jwt-google.guard';
 import { LoginCountInterceptor } from './interceptor/interceptor-count-login.interceptor';
 
-@ApiTags('auth') // Añade una etiqueta para agrupar las rutas en Swagger
+@ApiTags('auth') 
 @Controller('auth')
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
@@ -17,7 +17,6 @@ export class AuthController {
   @ApiOperation({ summary: 'Inicia el flujo de autenticación con Google' })
   @UseGuards(GoogleAuthGuard)
   async googleAuth(@Req() req) {
-    // No se necesita lógica aquí ya que es manejado por el guard
   }
 
   @Get('google/callback')
@@ -41,7 +40,7 @@ export class AuthController {
   @Post('register')
   @ApiOperation({ summary: 'Registrar un nuevo usuario' })
   @ApiResponse({ status: 201, description: 'Usuario registrado correctamente' })
-  @ApiBody({ type: CreateUserDto }) // Documenta el body que se espera en el request
+  @ApiBody({ type: CreateUserDto }) 
   register(@Body(CreateUserPipe) createUserDto: CreateUserDto) {
     return this.authService.register(createUserDto);
   }
@@ -51,7 +50,7 @@ export class AuthController {
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Iniciar sesión' })
   @ApiResponse({ status: 200, description: 'Sesión iniciada correctamente' })
-  @ApiBody({ type: login }) // Documenta el DTO que se espera en el body del request
+  @ApiBody({ type: login })
   async signIn(@Body() login: login): Promise<{ alldata: User; accessToken: string }> {
     return this.authService.signIn(login);
   }

@@ -9,7 +9,6 @@ export class LoginCountInterceptor implements NestInterceptor {
   intercept(context: ExecutionContext, next: CallHandler): Observable<any> {
     const request = context.switchToHttp().getRequest();
 
-    // Verifica si la ruta actual es la de login
     if (request.url === '/auth/signin' && request.method === 'POST') {
       this.loginCount++;
       console.log(`Número de logins: ${this.loginCount}`);
@@ -17,12 +16,10 @@ export class LoginCountInterceptor implements NestInterceptor {
 
     return next.handle().pipe(
       tap(() => {
-        // Aquí podrías realizar otras acciones si es necesario
       }),
     );
   }
 
-  // O puedes tener un método para obtener el conteo actual
   getLoginCount(): number {
     return this.loginCount;
   }

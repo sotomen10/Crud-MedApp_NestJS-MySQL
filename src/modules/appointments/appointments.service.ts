@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, Between,Like } from 'typeorm';
+import { Repository, Between, Like } from 'typeorm';
 import { Appointment } from '../appointments/entities/appointment.entity';
 import { User } from '../users/entities/user.entity';
 import { Patient } from '../patients/entities/patient.entity';
@@ -18,48 +18,38 @@ export class AppointmentService {
   ) {}
 
   private convertToUtcDate(date: Date, time: string): Date {
-    const [timePart, modifier] = time.split(' '); // Split time into parts
+    const [timePart, modifier] = time.split(' ');
     let [hours, minutes] = timePart.split(':').map(Number);
 
-    // Convert to 24-hour format
     if (modifier === 'PM' && hours < 12) hours += 12;
     if (modifier === 'AM' && hours === 12) hours = 0;
 
-    // Set the time on the provided date and convert to UTC
     date.setHours(hours, minutes, 0, 0);
-    return new Date(date.toISOString()); // Ensure UTC time
+    return new Date(date.toISOString());
   }
 
   async createAppointment(createAppointmentDto: CreateAppointmentDto): Promise<Appointment> {
     const { doctorId, patientId, date, time, description, specialty, reason } = createAppointmentDto;
 
-    const appointmentDate = new Date(date); // Parse the date from the request (UTC)
+    const appointmentDate = new Date(date);
 
     const doctor = await this.userRepository.findOne({ where: { id: doctorId } });
     if (!doctor) {
-      throw new NotFoundException('Médico no encontrado');
+      throw new NotFoundException('Doctor not found');
     }
 
     const patient = await this.patientRepository.findOne({ where: { id: patientId } });
     if (!patient) {
-      throw new NotFoundException('Paciente no encontrado');
+      throw new NotFoundException('Patient not found');
     }
 
-    // Convert the provided time to UTC and set it to the appointment date
     const appointmentDateWithTime = this.convertToUtcDate(appointmentDate, time);
 
-    // Calculate range for conflict validation
     const startRange = new Date(appointmentDateWithTime);
     const endRange = new Date(appointmentDateWithTime);
-    startRange.setMinutes(startRange.getMinutes() - 30); // Start range: 30 minutes before
-    endRange.setMinutes(endRange.getMinutes() + 30); // End range: 30 minutes after
+    startRange.setMinutes(startRange.getMinutes() - 30);
+    endRange.setMinutes(endRange.getMinutes() + 30);
 
-    console.log('Validating appointment within range:', {
-      startRange,
-      endRange,
-    });
-
-    // Check for overlapping appointments
     const conflictingAppointments = await this.appointmentRepository.find({
       where: {
         doctor: { id: doctorId },
@@ -67,13 +57,10 @@ export class AppointmentService {
       },
     });
 
-    console.log('Conflicting appointments found:', conflictingAppointments);
-
     if (conflictingAppointments.length > 0) {
-      throw new BadRequestException('El médico ya tiene una cita dentro de los 30 minutos de esta hora.');
+      throw new BadRequestException('The doctor already has an appointment within 30 minutes of this time.');
     }
 
-    // Create the new appointment
     const newAppointment = this.appointmentRepository.create({
       date: appointmentDateWithTime,
       time,
@@ -84,20 +71,15 @@ export class AppointmentService {
       patient,
     });
 
-    console.log('Saving new appointment:', newAppointment);
-
     return this.appointmentRepository.save(newAppointment);
   }
-
-
-
 
   async filterAppointments({
     date,
     specialty,
     reason,
   }: {
-    date?: string; // Fecha en formato ISO
+    date?: string;
     specialty?: string;
     reason?: string;
   }): Promise<Appointment[]> {
@@ -108,41 +90,34 @@ export class AppointmentService {
       const startOfDay = new Date(parsedDate.setUTCHours(0, 0, 0, 0));
       const endOfDay = new Date(parsedDate.setUTCHours(23, 59, 59, 999));
 
-      where.date = Between(startOfDay, endOfDay); // Filtro por rango de la fecha
+      where.date = Between(startOfDay, endOfDay);
     }
 
     if (specialty) {
-      where.specialty = Like(`%${specialty}%`); // Filtro por especialidad (parcial)
+      where.specialty = Like(`%${specialty}%`);
     }
 
     if (reason) {
-      where.reason = Like(`%${reason}%`); // Filtro por motivo (parcial)
+      where.reason = Like(`%${reason}%`);
     }
 
     const appointments = await this.appointmentRepository.find({
       where,
-      relations: ['doctor', 'patient'], // Incluye las relaciones para devolver información completa
+      relations: ['doctor', 'patient'],
     });
 
     return appointments;
   }
 
   async updateDescription(id: string, newDescription: string): Promise<Appointment> {
-    // Buscar la cita por ID
     const appointment = await this.appointmentRepository.findOne({ where: { id } });
     
-    // Si no se encuentra la cita, lanzamos un error
     if (!appointment) {
-      throw new NotFoundException('Cita no encontrada');
+      throw new NotFoundException('Appointment not found');
     }
 
-    // Actualizar la descripción de la cita
     appointment.description = newDescription;
 
-    // Guardar la cita con la nueva descripción
     return this.appointmentRepository.save(appointment);
   }
 }
-
-
-

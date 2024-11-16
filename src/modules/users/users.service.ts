@@ -13,37 +13,34 @@ import { FindById } from './dto/find-by-id.dto';
 @Injectable()
 export class UsersService implements UserInterface {
   constructor(
-    @InjectRepository(User) private userRepositori: Repository<User>,
-    @InjectRepository(Role) private roleRepository: Repository<Role> // Repositorio de roles
+    @InjectRepository(User) private userRepository: Repository<User>,
+    @InjectRepository(Role) private roleRepository: Repository<Role>
   ) {}
 
   async create(createUser: CreateUserDto): Promise<User> {
     try {
       const { password, confirmPassword, roles: roleIds } = createUser;
-      const encryptedPassword = await bcrypt.hash(password, 10);
+      const hashedPassword = await bcrypt.hash(password, 10);
 
-      if (password === confirmPassword) {
-        
-        const roles = await this.roleRepository.findBy({ id: In(roleIds) });
-        if (roles.length !== roleIds.length) {
-          throw new BadRequestException('Some roles were not found.');
-        }
-
-        
-        const user = this.userRepositori.create({
-          ...createUser,
-          password: encryptedPassword,
-          roles,  
-        });
-
-        const usersaved = await this.userRepositori.save(user);
-        return usersaved;
-      } else {
-        throw new BadRequestException('Ensure that confirm password and password is the same');
+      if (password !== confirmPassword) {
+        throw new BadRequestException('Passwords must match.');
       }
+
+      const roles = await this.roleRepository.findBy({ id: In(roleIds) });
+      if (roles.length !== roleIds.length) {
+        throw new BadRequestException('One or more roles could not be found.');
+      }
+
+      const newUser = this.userRepository.create({
+        ...createUser,
+        password: hashedPassword,
+        roles,
+      });
+
+      return await this.userRepository.save(newUser);
     } catch (error) {
-      console.log('Error from service of create user:', error.message);
-      throw new InternalServerErrorException('Error creating the user from service');
+      console.error('Error in create user service:', error.message);
+      throw new InternalServerErrorException('Failed to create user.');
     }
   }
 
@@ -56,119 +53,116 @@ export class UsersService implements UserInterface {
     try {
       const { page, limit } = pagination;
       const skip = (page - 1) * limit;
-      const [users, total] = await this.userRepositori.findAndCount({
+      const [users, total] = await this.userRepository.findAndCount({
         skip,
         take: limit,
-        relations: ['roles'],  
+        relations: ['roles'],
       });
-      return {
-        total,
-        page,
-        limit,
-        users,
-      };
+
+      return { total, page, limit, users };
     } catch (error) {
-      console.log('Error from service of findAll users:', error.message);
+      console.error('Error in findAll users service:', error.message);
+      throw new InternalServerErrorException('Failed to retrieve users.');
     }
   }
 
   async findOne(idObject: FindById): Promise<User> {
     try {
-  
-      const userFinded = await this.userRepositori.findOne({
+      const user = await this.userRepository.findOne({
         where: { id: idObject.id },
-        relations: ['roles'],  
+        relations: ['roles'],
       });
-      if (!userFinded) {
-        throw new NotFoundException(`User with id ${idObject.id} was not found, ensure that the id is correct`);
+
+      if (!user) {
+        throw new NotFoundException(`User with ID ${idObject.id} not found.`);
       }
-      return userFinded;
+
+      return user;
     } catch (error) {
+      console.error('Error finding user:', error.message);
       if (error instanceof NotFoundException) {
         throw error;
       }
-      console.error('Error finding user:', error.message);
-      throw new InternalServerErrorException('Error finding the user. Please try again later.');
+      throw new InternalServerErrorException('Error fetching user data.');
     }
   }
 
   async update(idObject: FindById, updateUser: UpdateUserDto): Promise<User> {
     try {
-      const user = await this.userRepositori.findOne({ where: { id: idObject.id }, relations: ['roles'] });
+      const user = await this.userRepository.findOne({
+        where: { id: idObject.id },
+        relations: ['roles'],
+      });
+
       if (!user) {
-        throw new NotFoundException(`User with id ${idObject.id} was not found.`);
+        throw new NotFoundException(`User with ID ${idObject.id} not found.`);
       }
 
       if (updateUser.password) {
-        const { password, confirmPassword } = updateUser;
-
-        if (password !== confirmPassword) {
-          throw new BadRequestException('Password and confirm password do not match.');
+        if (updateUser.password !== updateUser.confirmPassword) {
+          throw new BadRequestException('Passwords must match.');
         }
-
-        updateUser.password = await bcrypt.hash(password, 10);
+        updateUser.password = await bcrypt.hash(updateUser.password, 10);
       }
 
-      
       if (updateUser.roles) {
         const roles = await this.roleRepository.findBy({ id: In(updateUser.roles) });
         if (roles.length !== updateUser.roles.length) {
-          throw new BadRequestException('Some roles were not found.');
+          throw new BadRequestException('One or more roles could not be found.');
         }
         user.roles = roles;
       }
 
-      await this.userRepositori.save(user); 
+      Object.assign(user, updateUser);
 
-      const updatedUser = await this.userRepositori.findOne({
+      await this.userRepository.save(user);
+
+      return this.userRepository.findOne({
         where: { id: idObject.id },
         relations: ['roles'],
       });
-      if (!updatedUser) {
-        throw new InternalServerErrorException('Failed to retrieve updated user.');
-      }
-
-      return updatedUser;
     } catch (error) {
       console.error('Error updating user:', error.message);
       if (error instanceof NotFoundException || error instanceof BadRequestException) {
         throw error;
       }
-      throw new InternalServerErrorException('Error updating the user. Please try again later.');
+      throw new InternalServerErrorException('Failed to update user.');
     }
   }
 
   async remove(idObject: FindById): Promise<{ message: string }> {
     try {
-      const user = await this.userRepositori.findOne({ where: { id: idObject.id }, relations: ['roles'] });
+      const user = await this.userRepository.findOne({
+        where: { id: idObject.id },
+        relations: ['roles'],
+      });
+
       if (!user) {
-        throw new NotFoundException(`User with id ${idObject.id} was not found.`);
+        throw new NotFoundException(`User with ID ${idObject.id} not found.`);
       }
 
-      await this.userRepositori.delete(idObject);
+      await this.userRepository.delete(idObject.id);
 
-      return { message: `User with id ${idObject.id} was successfully deleted.` };
+      return { message: `User with ID ${idObject.id} successfully deleted.` };
     } catch (error) {
       console.error('Error deleting user:', error.message);
       if (error instanceof NotFoundException) {
         throw error;
       }
-      throw new InternalServerErrorException('Error deleting the user. Please try again later.');
+      throw new InternalServerErrorException('Failed to delete user.');
     }
   }
 
   async findByEmail(email: string): Promise<User> {
     try {
-      const user = await this.userRepositori.findOne({
+      return await this.userRepository.findOne({
         where: { email },
-        relations: ['roles']
+        relations: ['roles'],
       });
-      
-      return user;
     } catch (error) {
       console.error('Error finding user by email:', error.message);
-      throw new InternalServerErrorException('Error finding the user by email. Please try again later.');
+      throw new InternalServerErrorException('Failed to retrieve user by email.');
     }
   }
-
 }
+

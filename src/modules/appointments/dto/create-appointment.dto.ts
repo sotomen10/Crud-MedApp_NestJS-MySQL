@@ -7,8 +7,8 @@ export class CreateAppointmentDto {
   @IsNotEmpty()
   patientId: string;
 
-  @IsDateString() // Asegura que la cadena sea una fecha válida
-  date: string; // Recibe la fecha como string pero se convierte luego a Date
+  @IsDateString() 
+  date: string; 
 
   @IsNotEmpty()
   @IsString()
@@ -19,9 +19,8 @@ export class CreateAppointmentDto {
 
   @IsNotEmpty()
   @IsString()
-  specialty: string; // Nueva propiedad para la especialidad del médico
-
+  specialty: string; 
   @IsNotEmpty()
   @IsString()
-  reason: string; // Nueva propiedad para el motivo de la cita
+  reason: string;
 }
