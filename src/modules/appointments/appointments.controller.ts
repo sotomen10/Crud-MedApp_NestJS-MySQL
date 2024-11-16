@@ -7,15 +7,16 @@ import { JwtAuthGuard } from 'src/auth/guards/jwt.guard';
 import { RolesGuard } from 'src/auth/guards/jwt-roles.guard';
 
 @Controller('appointments')
-@UseGuards(JwtAuthGuard)
 export class AppointmentController {
   constructor(private readonly appointmentService: AppointmentService) {}
 
+  @UseGuards(JwtAuthGuard)  
   @Post()
   async create(@Body() createAppointmentDto: CreateAppointmentDto): Promise<Appointment> {
     return this.appointmentService.createAppointment(createAppointmentDto);
   }
 
+  @UseGuards(JwtAuthGuard)
   @Get('filter')
   @ApiQuery({ name: 'date', required: false, description: 'Date in ISO format' })
   @ApiQuery({ name: 'specialty', required: false, description: 'Medical specialty' })
@@ -29,7 +30,7 @@ export class AppointmentController {
     return this.appointmentService.filterAppointments({ date, specialty, reason });
   }
 
-
+  @UseGuards(JwtAuthGuard,RolesGuard)
   @Patch(':id/description')
   async updateDescription(
     @Param('id') id: string, 

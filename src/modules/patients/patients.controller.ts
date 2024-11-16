@@ -4,9 +4,10 @@ import { PatientsService } from './patients.service';
 import { CreatePatientDto } from './dto/create-patient.dto';
 import { UpdatePatientDto } from './dto/update-patient.dto';
 import { JwtAuthGuard } from 'src/auth/guards/jwt.guard';
+import { RolesGuard } from 'src/auth/guards/jwt-roles.guard';
 
 @Controller('patients')
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard,RolesGuard)
 export class PatientsController {
   constructor(private readonly patientsService: PatientsService) {}
 
